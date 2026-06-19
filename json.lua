@@ -1,6 +1,8 @@
 -- json.lua
 local json = {}
 
+json.null = setmetatable({}, { __tostring = function() return "null" end })
+
 local function escape_str(s)
   local out = s:gsub('[%c"\\]', function(c)
     if c == '"' then return '\\"' end
@@ -45,6 +47,8 @@ end
 encode_value = function(v)
   local t = type(v)
   if v == nil then
+    return "null"
+  elseif v == json.null then
     return "null"
   elseif t == "boolean" then
     return tostring(v)
@@ -169,7 +173,7 @@ parse_value = function(s, i)
   elseif s:sub(i, i + 4) == "false" then
     return false, i + 5
   elseif s:sub(i, i + 3) == "null" then
-    return nil, i + 4
+    return json.null, i + 4
   else
     return parse_number(s, i)
   end
