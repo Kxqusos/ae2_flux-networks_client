@@ -42,7 +42,7 @@ local function process_orders(client, ae2_component)
     return
   end
 
-  for _, order in ipairs(result.orders) do
+  for _, order in ipairs(result.orders or {}) do
     local craft_ok, message = ae2.request_craft(ae2_component, order.kind, order.item, order.amount)
     local status_payload
     if craft_ok then
