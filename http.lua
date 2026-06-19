@@ -15,15 +15,31 @@ function http.new(internet_component, base_url, api_token)
 end
 
 function HttpClient:read_all(handle)
-  local chunks = {}
-  while true do
-    local chunk = handle()
-    if chunk == nil then
+  local code
+  for attempt = 1, 40 do
+    local ok
+    ok, code = pcall(handle.response, handle)
+    if ok and code ~= nil then
       break
     end
-    table.insert(chunks, chunk)
+    os.sleep(0.25)
   end
-  local code, message = handle.response()
+
+  local chunks = {}
+  local empty_attempts = 0
+  while empty_attempts < 10 do
+    local ok, chunk = pcall(handle)
+    if not ok or chunk == nil then
+      break
+    elseif chunk == "" then
+      empty_attempts = empty_attempts + 1
+      os.sleep(0.2)
+    else
+      empty_attempts = 0
+      table.insert(chunks, chunk)
+    end
+  end
+
   return code, table.concat(chunks)
 end
 
@@ -37,6 +53,10 @@ function HttpClient:request(method, path, body)
 
   local handle = self.internet.request(self.base_url .. path, encoded_body, headers)
   local code, raw_body = self:read_all(handle)
+
+  if code == nil then
+    return false, "no response from server (connection timed out)"
+  end
 
   if code < 200 or code >= 300 then
     return false, "HTTP " .. tostring(code) .. ": " .. raw_body
