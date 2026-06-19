@@ -20,17 +20,20 @@ wget -f https://raw.githubusercontent.com/Kxqusos/ae2_flux-networks_client/main/
 ```
 
 This downloads `json.lua`, `http.lua`, `flux.lua`, `ae2.lua`, `config.lua`, `main.lua` into
-`/home/`. Re-running it later updates everything except an existing `config.lua` (your
-settings are preserved).
+`/home/client/`. Re-running it later (e.g. `install`) updates everything except an existing
+`config.lua` (your settings are preserved) — run `reboot` afterwards, since OpenComputers
+caches loaded modules in memory for the whole boot session and won't pick up the new files
+until the Lua VM restarts.
 
 **Manual alternative** (no Internet Card / offline): copy all `.lua` files
-(`json.lua`, `http.lua`, `flux.lua`, `ae2.lua`, `config.lua`, `main.lua`) onto the computer's
-filesystem via floppy disk or HDD.
+(`json.lua`, `http.lua`, `flux.lua`, `ae2.lua`, `config.lua`, `main.lua`) into `/home/client/`
+on the computer's filesystem via floppy disk or HDD.
 
 Then:
-1. Edit `config.lua`: set `dashboard_url` to the dashboard's base URL and `api_token` to the
-   value of the dashboard's `API_TOKEN` environment variable.
-2. Run `main.lua` (or just `main`). It loops forever, polling every `poll_interval` seconds (default 60).
+1. Edit `/home/client/config.lua`: set `dashboard_url` to the dashboard's base URL and
+   `api_token` to the value of the dashboard's `API_TOKEN` environment variable.
+2. Run `cd /home/client && main` (or `lua main.lua`). It loops forever, polling every
+   `poll_interval` seconds (default 60).
 
 ## Running tests (on your dev machine, not in-game)
 

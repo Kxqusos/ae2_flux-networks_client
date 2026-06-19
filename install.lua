@@ -1,21 +1,23 @@
 -- install.lua
--- One-shot installer: downloads the runtime .lua files for this client
--- from GitHub onto the local OpenComputers filesystem.
+-- One-shot installer/updater: downloads the runtime .lua files for this
+-- client from GitHub into /home/client/, overwriting everything except an
+-- existing config.lua. Safe to re-run any time you want to pull updates.
 -- Usage (in an OC shell, with an Internet Card installed):
 --   wget -f https://raw.githubusercontent.com/Kxqusos/ae2_flux-networks_client/main/install.lua /home/install.lua
 --   install
 
 local internet = require("internet")
 local filesystem = require("filesystem")
-local shell = require("shell")
 
 local base_url = "https://raw.githubusercontent.com/Kxqusos/ae2_flux-networks_client/main/"
 local files = { "json.lua", "http.lua", "flux.lua", "ae2.lua", "config.lua", "main.lua" }
-local dest_dir = "/home/"
+local dest_dir = "/home/client/"
 
 local function download(url)
+  -- cache-bust raw.githubusercontent.com's ~5 minute CDN cache
+  local cache_busted_url = url .. "?v=" .. tostring(os.time())
   local result = {}
-  local ok, response = pcall(internet.request, url)
+  local ok, response = pcall(internet.request, cache_busted_url)
   if not ok then
     error("request failed: " .. tostring(response))
   end
@@ -24,6 +26,8 @@ local function download(url)
   end
   return table.concat(result)
 end
+
+filesystem.makeDirectory(dest_dir)
 
 for _, name in ipairs(files) do
   local dest = dest_dir .. name
@@ -38,4 +42,4 @@ for _, name in ipairs(files) do
   end
 end
 
-io.write("\nDone. Edit /home/config.lua with your dashboard_url and api_token, then run: main\n")
+io.write("\nDone. Edit " .. dest_dir .. "config.lua if needed, then run: reboot\n")
