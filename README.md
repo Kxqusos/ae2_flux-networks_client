@@ -1,0 +1,42 @@
+# AE2 + Flux Networks OpenComputers Client
+
+Lua program for an OpenComputers computer that pushes Flux Networks energy stats and AE2
+inventory/craftables (items and fluids) to a dashboard server, polls for pending orders, and
+triggers AE2 autocraft. See the separate `dashboard` repo for the server this talks to.
+
+## In-game requirements
+
+- OpenComputers computer: CPU, RAM, an OS/EEPROM, **Internet Card**.
+- **Adapter** facing the AE2 ME Controller (exposes `me_controller`/`me_interface`).
+- **Adapter** facing the Flux Networks Controller (exposes the Flux component).
+
+## Deployment
+
+1. Copy all `.lua` files (`json.lua`, `http.lua`, `flux.lua`, `ae2.lua`, `config.lua`, `main.lua`)
+   onto the computer's filesystem (floppy disk, HDD, or `wget` if self-hosted).
+2. Edit `config.lua`: set `dashboard_url` to the dashboard's base URL and `api_token` to the
+   value of the dashboard's `API_TOKEN` environment variable.
+3. Run `main.lua`. It loops forever, polling every `poll_interval` seconds (default 60).
+
+## Running tests (on your dev machine, not in-game)
+
+```bash
+luarocks install busted
+busted
+```
+
+## API Contract (shared with the `dashboard` repo)
+
+All requests carry header `Authorization: Bearer <api_token>`.
+`kind` is `"item"` or `"fluid"` on every inventory/craftable/order entry. Fluid quantities are in mB.
+
+- `POST /api/client/flux` — `{"energy_in", "energy_out", "buffer", "capacity"?}` → `{"ok": true}`
+- `POST /api/client/inventory` — `{"items": [...], "craftables": [...]}` → `{"ok": true}`
+- `GET /api/client/orders/pending` — → `{"orders": [{"id", "kind", "item", "label", "amount"}]}`
+- `POST /api/client/orders/{id}/result` — `{"status": "requested"|"done"|"failed", "message"?}` → `{"ok": true}`
+
+## Known unverified API surface
+
+`flux.lua` and `ae2.lua` use placeholder OpenComputers method names pending in-game
+verification — see the "In-game verification" steps in
+`docs/superpowers/plans/2026-06-19-oc-client.md` (Tasks 3 and 4).
