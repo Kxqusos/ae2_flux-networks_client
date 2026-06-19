@@ -12,11 +12,25 @@ triggers AE2 autocraft. See the separate `dashboard` repo for the server this ta
 
 ## Deployment
 
-1. Copy all `.lua` files (`json.lua`, `http.lua`, `flux.lua`, `ae2.lua`, `config.lua`, `main.lua`)
-   onto the computer's filesystem (floppy disk, HDD, or `wget` if self-hosted).
-2. Edit `config.lua`: set `dashboard_url` to the dashboard's base URL and `api_token` to the
+**One-command install (requires an Internet Card, with `raw.githubusercontent.com` allowed
+in `opencomputers.cfg`'s http whitelist):**
+
+```sh
+wget -f https://raw.githubusercontent.com/Kxqusos/ae2_flux-networks_client/main/install.lua /home/install.lua && install
+```
+
+This downloads `json.lua`, `http.lua`, `flux.lua`, `ae2.lua`, `config.lua`, `main.lua` into
+`/home/`. Re-running it later updates everything except an existing `config.lua` (your
+settings are preserved).
+
+**Manual alternative** (no Internet Card / offline): copy all `.lua` files
+(`json.lua`, `http.lua`, `flux.lua`, `ae2.lua`, `config.lua`, `main.lua`) onto the computer's
+filesystem via floppy disk or HDD.
+
+Then:
+1. Edit `config.lua`: set `dashboard_url` to the dashboard's base URL and `api_token` to the
    value of the dashboard's `API_TOKEN` environment variable.
-3. Run `main.lua`. It loops forever, polling every `poll_interval` seconds (default 60).
+2. Run `main.lua` (or just `main`). It loops forever, polling every `poll_interval` seconds (default 60).
 
 ## Running tests (on your dev machine, not in-game)
 
