@@ -23,13 +23,19 @@ describe("ae2.read_items", function()
 end)
 
 describe("ae2.read_craftables", function()
-  it("tags item and fluid craftables", function()
+  it("tags item and fluid craftables, using getItemStack/getFluid's false return to tell them apart", function()
     local mock_component = {
-      getCraftables = function(filter)
-        if filter and filter.fluid then
-          return { { getFluid = function() return { name = "minecraft:lava", label = "Lava" } end } }
-        end
-        return { { getItemStack = function() return { name = "minecraft:iron_ingot", label = "Iron Ingot" } end } }
+      getCraftables = function()
+        return {
+          {
+            getItemStack = function() return { name = "minecraft:iron_ingot", label = "Iron Ingot" } end,
+            getFluid = function() return false end,
+          },
+          {
+            getItemStack = function() return false end,
+            getFluid = function() return { name = "minecraft:lava", label = "Lava" } end,
+          },
+        }
       end,
     }
 
@@ -47,11 +53,11 @@ describe("ae2.request_craft", function()
   it("requests the matching craftable by kind and name", function()
     local requested_amount = nil
     local mock_component = {
-      getCraftables = function(filter)
-        if filter and filter.fluid then return {} end
+      getCraftables = function()
         return {
           {
             getItemStack = function() return { name = "minecraft:iron_ingot", label = "Iron Ingot" } end,
+            getFluid = function() return false end,
             request = function(amount) requested_amount = amount end,
           },
         }

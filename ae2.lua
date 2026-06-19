@@ -4,6 +4,11 @@
 -- OpenComputers integration. Verify the real API in-game (see README "In-game
 -- verification") before relying on this in production, and update this module +
 -- its spec together if they differ.
+--
+-- getCraftables(filter)'s `fluid` filter does not reliably split items from
+-- fluids: a craftable's getItemStack()/getFluid() returns `false` (not an
+-- error) when the craftable is the other kind, so callers must check the
+-- return type rather than assume it based on which filter was used.
 local ae2 = {}
 
 function ae2.read_items(ae2_component)
@@ -30,32 +35,35 @@ function ae2.read_items(ae2_component)
   return result
 end
 
+local function describe_craftable(craftable)
+  local stack = craftable.getItemStack()
+  if type(stack) == "table" then
+    return "item", stack
+  end
+  local fluid = craftable.getFluid()
+  if type(fluid) == "table" then
+    return "fluid", fluid
+  end
+  return nil, nil
+end
+
 function ae2.read_craftables(ae2_component)
   local result = {}
 
   for _, craftable in ipairs(ae2_component.getCraftables({})) do
-    local stack = craftable.getItemStack()
-    table.insert(result, { kind = "item", name = stack.name, label = stack.label })
-  end
-
-  for _, craftable in ipairs(ae2_component.getCraftables({ fluid = true })) do
-    local fluid = craftable.getFluid()
-    table.insert(result, { kind = "fluid", name = fluid.name, label = fluid.label })
+    local kind, info = describe_craftable(craftable)
+    if kind ~= nil then
+      table.insert(result, { kind = kind, name = info.name, label = info.label })
+    end
   end
 
   return result
 end
 
 local function find_craftable(ae2_component, kind, name)
-  local filter = (kind == "fluid") and { fluid = true } or {}
-  for _, craftable in ipairs(ae2_component.getCraftables(filter)) do
-    local matches
-    if kind == "fluid" then
-      matches = craftable.getFluid().name == name
-    else
-      matches = craftable.getItemStack().name == name
-    end
-    if matches then
+  for _, craftable in ipairs(ae2_component.getCraftables({})) do
+    local found_kind, info = describe_craftable(craftable)
+    if found_kind == kind and info.name == name then
       return craftable
     end
   end

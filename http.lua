@@ -1,6 +1,13 @@
 -- http.lua
 local json = require("json")
 
+-- os.sleep only exists in OpenOS, not in plain Lua (e.g. under busted).
+local function sleep(seconds)
+  if os.sleep then
+    os.sleep(seconds)
+  end
+end
+
 local HttpClient = {}
 HttpClient.__index = HttpClient
 
@@ -22,20 +29,24 @@ function HttpClient:read_all(handle)
     if ok and code ~= nil then
       break
     end
-    os.sleep(0.25)
+    sleep(0.25)
   end
 
+  -- A nil/empty chunk doesn't reliably mean end-of-stream on the real OC
+  -- Internet Card (confirmed via http_debug.lua: a still-arriving response
+  -- can read back nil on the first attempt). Treat nil/"" as "not ready
+  -- yet" and keep retrying for a couple seconds before giving up.
   local chunks = {}
-  local empty_attempts = 0
-  while empty_attempts < 10 do
+  local stall_attempts = 0
+  while stall_attempts < 10 do
     local ok, chunk = pcall(handle)
-    if not ok or chunk == nil then
+    if not ok then
       break
-    elseif chunk == "" then
-      empty_attempts = empty_attempts + 1
-      os.sleep(0.2)
+    elseif chunk == nil or chunk == "" then
+      stall_attempts = stall_attempts + 1
+      sleep(0.2)
     else
-      empty_attempts = 0
+      stall_attempts = 0
       table.insert(chunks, chunk)
     end
   end
