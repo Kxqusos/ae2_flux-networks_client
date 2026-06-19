@@ -49,8 +49,13 @@ All requests carry header `Authorization: Bearer <api_token>`.
 - `GET /api/client/orders/pending` — → `{"orders": [{"id", "kind", "item", "label", "amount"}]}`
 - `POST /api/client/orders/{id}/result` — `{"status": "requested"|"done"|"failed", "message"?}` → `{"ok": true}`
 
-## Known unverified API surface
+## In-game verification status
 
-`flux.lua` and `ae2.lua` use placeholder OpenComputers method names pending in-game
-verification — see the "In-game verification" steps in
-`docs/superpowers/plans/2026-06-19-oc-client.md` (Tasks 3 and 4).
+- `flux.lua`: **verified 2026-06-20.** Real `flux_controller` API uses `getEnergyInfo()`
+  returning `{energyInput, energyOutput, totalBuffer, totalEnergy}`; no method exposes total
+  network capacity, so `capacity` is always `nil`.
+- `ae2.lua`: **verified 2026-06-20.** Real `me_controller` API matches the original placeholder
+  exactly — `getItemsInNetwork`, `getFluidsInNetwork`, `getCraftables` all exist as named.
+  Still unconfirmed: whether `craftable.request(amount)` uses plain-function or colon-method
+  (`self`-first) call semantics — test this before relying on autocraft in production (see
+  `ae2.lua`'s `find_craftable`/`request_craft`).
