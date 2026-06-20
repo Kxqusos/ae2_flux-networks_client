@@ -10,15 +10,13 @@ local function make_mock_internet(responses)
     local response = table.remove(responses, 1)
     local chunks_sent = false
     local handle = {}
-    setmetatable(handle, {
-      __call = function()
-        if chunks_sent then
-          return nil
-        end
-        chunks_sent = true
-        return response.body
-      end,
-    })
+    function handle.read(n)
+      if chunks_sent then
+        return nil
+      end
+      chunks_sent = true
+      return response.body
+    end
     function handle.response()
       return response.code, "OK", {}
     end

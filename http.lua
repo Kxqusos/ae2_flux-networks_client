@@ -28,10 +28,15 @@ function HttpClient:read_all(handle)
   -- left the body empty, even after a 200 came back). So read the body
   -- first, retrying on nil/"" since data may not have arrived yet, and only
   -- call response() once afterwards.
+  -- handle.read(n) is a plain function bound to the handle by closure, not
+  -- a self-style method - call it with just the byte count (confirmed via
+  -- http_debug3.lua: passing handle as a first arg threw "integer expected,
+  -- got HTTPRequest"). The bare `handle()` call always returned nil on the
+  -- real Internet Card, so it can't be used to read the body either.
   local chunks = {}
   local stall_attempts = 0
   while stall_attempts < 20 do
-    local ok, chunk = pcall(handle)
+    local ok, chunk = pcall(handle.read, 8192)
     if not ok then
       break
     elseif chunk == nil or chunk == "" then
