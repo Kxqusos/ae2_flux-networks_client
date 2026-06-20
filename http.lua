@@ -22,23 +22,15 @@ function http.new(internet_component, base_url, api_token)
 end
 
 function HttpClient:read_all(handle)
-  local code
-  for attempt = 1, 40 do
-    local ok
-    ok, code = pcall(handle.response, handle)
-    if ok and code ~= nil then
-      break
-    end
-    sleep(0.25)
-  end
-
-  -- A nil/empty chunk doesn't reliably mean end-of-stream on the real OC
-  -- Internet Card (confirmed via http_debug.lua: a still-arriving response
-  -- can read back nil on the first attempt). Treat nil/"" as "not ready
-  -- yet" and keep retrying for a couple seconds before giving up.
+  -- Order matters here: on the real OC Internet Card, polling response()
+  -- before the body is fully read drains/discards the body (confirmed via
+  -- http_debug.lua and http_debug2.lua - polling response() first always
+  -- left the body empty, even after a 200 came back). So read the body
+  -- first, retrying on nil/"" since data may not have arrived yet, and only
+  -- call response() once afterwards.
   local chunks = {}
   local stall_attempts = 0
-  while stall_attempts < 10 do
+  while stall_attempts < 20 do
     local ok, chunk = pcall(handle)
     if not ok then
       break
@@ -49,6 +41,16 @@ function HttpClient:read_all(handle)
       stall_attempts = 0
       table.insert(chunks, chunk)
     end
+  end
+
+  local code
+  for attempt = 1, 10 do
+    local ok
+    ok, code = pcall(handle.response, handle)
+    if ok and code ~= nil then
+      break
+    end
+    sleep(0.2)
   end
 
   return code, table.concat(chunks)
