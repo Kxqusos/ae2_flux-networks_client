@@ -60,10 +60,17 @@ local function process_orders(client, ae2_component)
   end
 end
 
+local function run_step(name, fn, ...)
+  local ok, err = pcall(fn, ...)
+  if not ok then
+    print(name .. " failed: " .. tostring(err))
+  end
+end
+
 local function run_once(client, flux_component, ae2_component)
-  push_flux(client, flux_component)
-  push_inventory(client, ae2_component)
-  process_orders(client, ae2_component)
+  run_step("push_flux", push_flux, client, flux_component)
+  run_step("push_inventory", push_inventory, client, ae2_component)
+  run_step("process_orders", process_orders, client, ae2_component)
 end
 
 local function main()
