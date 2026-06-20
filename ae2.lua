@@ -6,9 +6,10 @@
 -- its spec together if they differ.
 --
 -- getCraftables(filter)'s `fluid` filter does not reliably split items from
--- fluids: a craftable's getItemStack()/getFluid() returns `false` (not an
--- error) when the craftable is the other kind, so callers must check the
--- return type rather than assume it based on which filter was used.
+-- fluids: a craftable's getItemStack()/getFluid() either returns `false` or
+-- the method doesn't exist at all (call error) when the craftable is the
+-- other kind. Callers must pcall both and check the return type rather than
+-- assume either based on which filter was used.
 local ae2 = {}
 
 function ae2.read_items(ae2_component)
@@ -36,12 +37,12 @@ function ae2.read_items(ae2_component)
 end
 
 local function describe_craftable(craftable)
-  local stack = craftable.getItemStack()
-  if type(stack) == "table" then
+  local ok1, stack = pcall(craftable.getItemStack)
+  if ok1 and type(stack) == "table" then
     return "item", stack
   end
-  local fluid = craftable.getFluid()
-  if type(fluid) == "table" then
+  local ok2, fluid = pcall(craftable.getFluid)
+  if ok2 and type(fluid) == "table" then
     return "fluid", fluid
   end
   return nil, nil
